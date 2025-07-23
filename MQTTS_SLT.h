@@ -77,12 +77,15 @@ public:
   bool MQTT_PUB(Broker *broker, String topic, String msg);
   bool MQTT_PUB(Broker *broker, String topic, String msg, uint8_t qos, uint pub_timeout, bool retained, bool dup);
 
-  uint8_t MQTTSUB(Broker *broker, String topic, uint8_t qos);
+  bool MQTTSUB(Broker *broker, const String &topic, uint8_t qos);
   uint8_t MQTTUNSUB(Broker *broker, String topic);
 
   bool SEND_AT_CMD_RAW(const char *at_command, unsigned int timeout, String* response);
   bool waitForOK(unsigned int timeout);
   bool waitForURC(const char* urc, unsigned int timeout);
+  bool waitForResponse(const char* ok,
+                     const char* error,
+                     unsigned int timeout);
 
 
 private:
