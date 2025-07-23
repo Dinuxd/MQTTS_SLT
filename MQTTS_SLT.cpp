@@ -444,17 +444,51 @@ bool MQTTS_SLT::MQTT_PUB(Broker *broker, String topic, String msg, uint8_t qos, 
   return true;
 }
 
-uint8_t MQTTS_SLT::MQTTSUB(Broker *broker, String topic, uint8_t qos)
-{
-  if (qos < 0 || qos > 2)
-    return 0xe0; 
+bool MQTTS_SLT::MQTTSUB(Broker *broker, const String &topic, uint8_t qos) {
 
-  String atCommand = "AT+CMQSUB=" + String(broker->mqttId) + ",\"" + topic + "\"," + qos + "\r\n";
-  char charArray[atCommand.length()];
-  atCommand.toCharArray(charArray, atCommand.length());
-  uint8_t answer = SENDATCMD(charArray, 4000, "OK", "ERROR");
-  return answer == 1 ? 0x01 : answer;
+  if (qos > 2) {
+    return false;
+  }
+
+
+  String cmd = "AT+CMQTTSUB="
+               + String(broker->mqttId) + ","
+               + String(topic.length()) + ","
+               + String(qos)
+               + "\r\n";
+  Serial2.print(cmd);
+
+
+  unsigned long start = millis();
+  bool gotPrompt = false;
+  while (millis() - start < 5000) {
+    if (Serial2.available() && Serial2.read() == '>') {
+      gotPrompt = true;
+      break;
+    }
+  }
+  if (!gotPrompt) {
+    return false;
+  }
+
+
+  Serial2.print(topic);
+  Serial2.print("\r\n");
+
+  if (!waitForOK(5000)) {
+    return false;
+  }
+
+  String urc = "+CMQTTSUB: " + String(broker->mqttId) + ",0";
+  if (!waitForURC(urc.c_str(), 5000)) {
+    return false;
+  }
+
+  return true;
 }
+
+
+
 
 uint8_t MQTTS_SLT::MQTTUNSUB(Broker *broker, String topic)
 {
@@ -543,7 +577,7 @@ bool MQTTS_SLT::SEND_AT_CMD_RAW(const char *at_command,
   char tempStr[100] = {0};
   uint pointer=0;
   for(uint8_t i = 0; i < x - 2; i++) {
-    if(response[i]==NULL || response[i]=='\r' || response[i]=='\n'){
+    if (response[i] == '\0' || response[i] == '\r' || response[i] == '\n'){
       Serial.println("null, newline detected");
     }else{
       tempStr[pointer]=response[i];
