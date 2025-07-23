@@ -12,7 +12,10 @@ void setup() {
   }
   while(!Serial.available());
     if(IIOT_Dev_kit.Init(115200)){
-    Serial.println("initialized...");  
+    Serial.println("initialized...");
+    while (Serial2.available()) {
+    Serial.write( Serial2.read() );
+  }  
   }
   else{
     Serial.println("initiallization error"); 
@@ -89,6 +92,14 @@ void loop() {
        Serial.println("MQTT Start Error");
       }
   break;
+
+  case 'U': {
+  bool ok = IIOT_Dev_kit.MQTTSUB(&TB_Broker0,
+                                 "test/topicmqtts",
+                                 0);
+  Serial.println(ok ? "Subscribed OK" : "Subscribe failed");
+} break;
+
 
       case 'C':
         if (IIOT_Dev_kit.MQTT_CONNECT(&TB_Broker0, "620f47c4-1398-44d6-9eac-f70f62c215d0")) {
