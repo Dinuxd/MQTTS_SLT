@@ -149,4 +149,12 @@ break;
         break;
     } 
   }
+  while (Serial2.available()) {
+    // read a whole line (up to '\n') and print it
+    String line = Serial2.readStringUntil('\n');
+    line.trim();
+    if (line.length()) {
+      Serial.println(line);
+    }
+  }
 }
